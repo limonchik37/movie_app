@@ -1,0 +1,55 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: api-gateway
+  cloud:
+    gateway:
+      globalcors:
+        cors-configurations:
+          '[/**]':
+            allowedOriginPatterns: "*"
+            allowedMethods: "*"
+            allowedHeaders: "*"
+            allowCredentials: true
+      routes:
+        # Auth endpoints → user-service
+        - id: auth-route
+          uri: ${USER_SERVICE_URL:http://localhost:8081}
+          predicates:
+            - Path=/api/auth/**
+
+        # User endpoints → user-service
+        - id: user-route
+          uri: ${USER_SERVICE_URL:http://localhost:8081}
+          predicates:
+            - Path=/users/**
+
+        # Movie endpoints → movie-service
+        - id: movie-route
+          uri: ${MOVIE_SERVICE_URL:http://localhost:8082}
+          predicates:
+            - Path=/movies/**
+
+        # Review endpoints (nested under movies) → review-service
+        - id: movie-reviews-route
+          uri: ${REVIEW_SERVICE_URL:http://localhost:8083}
+          predicates:
+            - Path=/movies/{movieId}/reviews/**
+
+        # Review endpoints (direct) → review-service
+        - id: reviews-route
+          uri: ${REVIEW_SERVICE_URL:http://localhost:8083}
+          predicates:
+            - Path=/reviews/**
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,gateway
+
+logging:
+  level:
+    org.springframework.cloud.gateway: DEBUG
